@@ -6,11 +6,7 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      
-      "node": {
-        "installer": "npm"
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal"
