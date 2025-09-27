@@ -40,3 +40,6 @@ app-example
 
 # Environment variables
 .env
+
+# Ignore the npm lock file to force EAS Build to use npm install
+package-lock.json
