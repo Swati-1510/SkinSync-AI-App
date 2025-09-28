@@ -71,9 +71,8 @@ const Explore = () => {
                 {/* Scan Your Shelf Card */}
                 <TouchableOpacity
                     style={{ padding: hp(2) }}
-                    className="bg-primary rounded-2xl shadow-md flex-row items-center mb-8"
-                    // --- THIS IS THE NEW LINE ---
-                    onPress={() => router.push('/(app)/scanner')}                >
+                    className="bg-primary rounded-2xl shadow-md flex-row items-center mb-8">
+                    {/* onPress={() => router.push('/(app)/scanner')} */}
                     <BarcodeScanner width={65} height={70} fill="white" />
                     <View className="ml-4 flex-1">
                         <Text className="text-white font-nunito-sans-bold" style={{ fontSize: hp(2.2) }}>Scan Your Shelf</Text>

@@ -10,7 +10,10 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, usersRef } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
+import { collection } from 'firebase/firestore';
+
+const usersRef = collection(db, 'users');
 
 
 WebBrowser.maybeCompleteAuthSession();

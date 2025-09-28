@@ -1,44 +1,39 @@
+// This is the complete and correct code for app/_layout.js
+
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { AuthContextProvider, useAuth } from '../context/authContext';
 import { StatusBar } from 'expo-status-bar';
-import Loading from '../components/Loading'; // Import your custom Loading component
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Loading from '../components/Loading'; // Your custom Loading component
 import { useFonts, NunitoSans_400Regular, NunitoSans_700Bold } from '@expo-google-fonts/nunito-sans';
 import { PlayfairDisplay_400Regular } from '@expo-google-fonts/playfair-display';
 import * as SplashScreen from 'expo-splash-screen';
 import "../global.css";
 
-SplashScreen.preventAutoHideAsync(); // Keep the splash screen visible
+// Keep the splash screen visible while we do all our initial loading
+SplashScreen.preventAutoHideAsync();
 
-
+// This is the "brain" component that decides what to render
 const MainLayout = () => {
-    const { isAuthenticated } = useAuth();
-    const segments = useSegments();
-    const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-    useEffect(() => {
-        // This effect ONLY handles redirecting between public and private areas.
-        
-        // If we don't know the auth state yet, just wait. The loader will show.
-        if (typeof isAuthenticated === 'undefined') return;
+  useEffect(() => {
+    // If the initial check isn't done, do nothing.
+    if (typeof isAuthenticated === 'undefined') return;
 
-        const inApp = segments[0] === '(app)';
+    const inApp = segments[0] === '(app)';
 
-        if (isAuthenticated && !inApp) {
-            // User is logged in but is on a public screen. Send them into the app.
-            router.replace('(app)/home'); // Go to a default screen in the group
-        } else if (isAuthenticated === false) {
-            // User is NOT logged in. If they are in the private area, kick them out.
-            if (inApp) {
-                router.replace('/'); // Send to the welcome/start page
-            }
-        }
-    }, [isAuthenticated, segments, router]);
+    if (isAuthenticated && !inApp) {
+      router.replace('/home');
+    } else if (isAuthenticated === false && inApp) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, segments, router]);
 
-    // If the auth state is still loading, show a full-screen loader.
-    // This prevents the flicker of the welcome/login page.
+    // Show a full-screen loader ONLY while we wait for the initial auth check.
     if (typeof isAuthenticated === 'undefined') {
         return (
             <View className="flex-1 items-center justify-center bg-app-bg">
@@ -47,11 +42,11 @@ const MainLayout = () => {
         );
     }
 
-    // After the check, render the correct route group (public or private).
+    // After the check is complete, render the correct page (public or private).
     return <Slot />;
 }
 
-
+// This is the main Root Layout component for the entire app.
 export default function RootLayout() {
     // Load all necessary fonts
     const [fontsLoaded, fontError] = useFonts({
@@ -72,7 +67,7 @@ export default function RootLayout() {
         return null;
     }
 
-    // The AuthContextProvider wraps everything, making auth state available everywhere.
+    // The AuthContextProvider wraps everything.
     return (
         <AuthContextProvider>
             <MainLayout />
