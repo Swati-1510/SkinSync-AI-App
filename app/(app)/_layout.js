@@ -1,9 +1,8 @@
-import { Tabs, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
-import { useAuth } from '../../context/authContext';
+import { Tabs } from 'expo-router';
+import React from 'react';
 
-import HomeSolidIcon from '../../assets/icons/home-solid.svg'; 
-import HomeOutlineIcon from '../../assets/icons/HomeIcon.svg'; 
+import HomeSolidIcon from '../../assets/icons/home-solid.svg';
+import HomeOutlineIcon from '../../assets/icons/HomeIcon.svg';
 import RoutineSolidIcon from '../../assets/icons/routine-solid.svg';
 import RoutineOutlineIcon from '../../assets/icons/RoutineIcon.svg';
 import ExploreSolidIcon from '../../assets/icons/explore-solid.svg';
@@ -15,51 +14,39 @@ import ProfileOutlineIcon from '../../assets/icons/ProfileIcon.svg';
 
 const colors = {
     primary: '#FA7268',    // Living Coral
-    lightCoral: '#FECECE', // The fill color
+    lightCoral: '#FECECE', // The fill colorw
     sage: '#B2AC88',       // Sage
 };
 
 export default function AppLayout() {
-  const { user } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-        // We only run this check if we have the user's data loaded from Firestore.
-        if (user?.username) { 
-            if (!user.skinProfile || Object.keys(user.skinProfile).length === 0) {
-                // User is inside the app but has no profile, send them to the quiz.
-                router.replace('/(app)/quiz');
-            }
-        }
-    }, [user]);
   return (
     <Tabs
       screenOptions={{
-                headerShown: false,
-                tabBarStyle: {
-                    backgroundColor: '#FFFFFF',
-                    borderTopWidth: 1,
-                    borderTopColor: colors.sage,
-                    height: 90,
-                    paddingBottom: 10,
-                    paddingTop: 5,
-                },
-                tabBarLabelStyle: {
-                    fontFamily: 'NunitoSans_700Bold',
-                    fontSize: 12,
-                },
-                tabBarActiveTintColor: colors.primary,
-                tabBarInactiveTintColor: colors.sage,
-            }}
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: colors.sage,
+          height: 60,
+          paddingBottom: 10,
+        },
+        tabBarLabelStyle: {
+          fontFamily: 'NunitoSans_700Bold',
+          fontSize: 12,
+        },
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: colors.primary, // Set the ACTIVE label color
+        tabBarInactiveTintColor: colors.sage, // Set the INACTIVE label color
+      }}
     >
       {/* Home Tab */}
       <Tabs.Screen
         name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) => 
-            focused ? 
-            <HomeSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> : 
+          tabBarIcon: ({ focused }) =>
+            focused ?
+            <HomeSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> :
             <HomeOutlineIcon stroke={colors.sage} width={28} height={28} />,
         }}
       />
@@ -69,33 +56,33 @@ export default function AppLayout() {
         name="routine"
         options={{
           title: 'Routine',
-          tabBarIcon: ({ focused }) => 
-            focused ? 
-            <RoutineSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> : 
+          tabBarIcon: ({ focused }) =>
+            focused ?
+            <RoutineSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> :
             <RoutineOutlineIcon stroke={colors.sage} width={28} height={28} />,
         }}
       />
-      
+
       {/* Explore Tab */}
       <Tabs.Screen
         name="explore"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ focused }) => 
-            focused ? 
-            <ExploreSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> : 
+          tabBarIcon: ({ focused }) =>
+            focused ?
+            <ExploreSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> :
             <ExploreOutlineIcon stroke={colors.sage} width={28} height={28} />,
         }}
       />
-      
+
       {/* Progress Tab */}
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ focused }) => 
-            focused ? 
-            <ProgressSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> : 
+          tabBarIcon: ({ focused }) =>
+            focused ?
+            <ProgressSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> :
             <ProgressOutlineIcon stroke={colors.sage} width={28} height={28} />,
         }}
       />
@@ -105,14 +92,14 @@ export default function AppLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => 
-            focused ? 
-            <ProfileSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> : 
+          tabBarIcon: ({ focused }) =>
+            focused ?
+            <ProfileSolidIcon stroke={colors.primary} fill={colors.lightCoral} width={28} height={28} /> :
             <ProfileOutlineIcon stroke={colors.sage} width={28} height={28} />,
         }}
       />
 
-       {/* Quiz Screen (Hidden) */}
+       {/* Quiz Screen (Hidden from tabs, but accessible via router.replace) */}
        <Tabs.Screen name="quiz" options={{ href: null }} />
     </Tabs>
   );

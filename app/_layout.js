@@ -1,40 +1,56 @@
-// This is the complete and correct code for app/_layout.js
-
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { AuthContextProvider, useAuth } from '../context/authContext';
 import { StatusBar } from 'expo-status-bar';
-import Loading from '../components/Loading'; // Your custom Loading component
+import Loading from '../components/Loading'; // Import your custom Loading component
 import { useFonts, NunitoSans_400Regular, NunitoSans_700Bold } from '@expo-google-fonts/nunito-sans';
 import { PlayfairDisplay_400Regular } from '@expo-google-fonts/playfair-display';
 import * as SplashScreen from 'expo-splash-screen';
 import "../global.css";
 
-// Keep the splash screen visible while we do all our initial loading
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync(); // Keep the splash screen visible
 
-// This is the "brain" component that decides what to render
+
 const MainLayout = () => {
-  const { isAuthenticated } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
+    // Get the full user object to check for skinProfile and firestoreChecked flag
+    const { isAuthenticated, user } = useAuth();
+    const segments = useSegments();
+    const router = useRouter();
 
-  useEffect(() => {
-    // If the initial check isn't done, do nothing.
-    if (typeof isAuthenticated === 'undefined') return;
+    useEffect(() => {
+        // This effect handles all redirection logic.
+        
+        if (typeof isAuthenticated === 'undefined' || (isAuthenticated && !user?.firestoreChecked)) {
+            return;
+        }
 
-    const inApp = segments[0] === '(app)';
+        const inApp = segments[0] === '(app)';
 
-    if (isAuthenticated && !inApp) {
-      router.replace('/home');
-    } else if (isAuthenticated === false && inApp) {
-      router.replace('/');
-    }
-  }, [isAuthenticated, segments, router]);
+        if (isAuthenticated) {
+            // User is authenticated and Firestore data has been checked.
+            if (!inApp) {
+                // User is on a public screen (e.g., login), so we need to redirect them.
+                if (user?.skinProfile) {
+                    // User has a skin profile, send them to the main app.
+                    router.replace('(app)/home');
+                } else {
+                    // User does NOT have a skin profile, send them to the quiz.
+                    // --- THIS IS THE CORRECTED LINE ---
+                    router.replace('/quiz'); 
+                }
+            }
+        } else {
+            // User is NOT logged in.
+            if (inApp) {
+                // If they are inside a protected area, redirect them to the start page.
+                router.replace('/');
+            }
+        }
+    }, [isAuthenticated, user, segments, router]);
 
-    // Show a full-screen loader ONLY while we wait for the initial auth check.
-    if (typeof isAuthenticated === 'undefined') {
+    // Show a loading screen while checking auth state OR waiting for Firestore data.
+    if (typeof isAuthenticated === 'undefined' || (isAuthenticated && !user?.firestoreChecked)) {
         return (
             <View className="flex-1 items-center justify-center bg-app-bg">
                 <Loading size={100} />
@@ -42,11 +58,11 @@ const MainLayout = () => {
         );
     }
 
-    // After the check is complete, render the correct page (public or private).
+    // After all checks, render the correct route group (public or private).
     return <Slot />;
 }
 
-// This is the main Root Layout component for the entire app.
+
 export default function RootLayout() {
     // Load all necessary fonts
     const [fontsLoaded, fontError] = useFonts({
@@ -67,7 +83,7 @@ export default function RootLayout() {
         return null;
     }
 
-    // The AuthContextProvider wraps everything.
+    // The AuthContextProvider wraps everything, making auth state available everywhere.
     return (
         <AuthContextProvider>
             <MainLayout />

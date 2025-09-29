@@ -1,7 +1,11 @@
+// Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 import { getAuth, getReactNativePersistence, initializeAuth } from 'firebase/auth';
 import { Platform } from 'react-native';
+// Your web app's Firebase configuration
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {getFirestore, collection} from 'firebase/firestore';
 const firebaseConfig = {
@@ -16,30 +20,30 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app;
-let auth;
-
 if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-  // Initialize auth for the first time
-  if (Platform.OS === 'web') {
-    auth = getAuth(app); // Standard web initialization
-  } else {
-    // For native, use persistent storage
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage),
-    });
-  }
-  // Optional: Initialize Analytics
-  isSupported().then(supported => supported && getAnalytics(app));
+    app = initializeApp(firebaseConfig);
+    // Initialize auth for the first time
+    if (Platform.OS !== 'web') {
+        initializeAuth(app, {
+            persistence: getReactNativePersistence(AsyncStorage)
+        });
+    }
 } else {
-  app = getApp();
-  auth = getAuth(app); // Get existing auth instance
+    app = getApp();
 }
 
-export { app, auth };
 
-const db = getFirestore(app);
+isSupported().then(supported => {
+    if (supported) {
+        const analytics = getAnalytics(app);
+    }
+});
 
-export { db };
+export const auth = getAuth(app);
 
-  
+export const db = getFirestore(app);
+
+export const usersRef = collection(db, 'users');
+export const roomRef = collection(db, 'rooms');
+
+// Any other Firebase services you want to use

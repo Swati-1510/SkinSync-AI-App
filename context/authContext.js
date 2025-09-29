@@ -10,10 +10,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "../firebaseConfig";
-import { collection } from 'firebase/firestore';
-
-const usersRef = collection(db, 'users');
+import { auth, usersRef } from "../firebaseConfig";
 
 
 WebBrowser.maybeCompleteAuthSession();
@@ -45,33 +42,30 @@ export const AuthContextProvider = ({ children }) => {
     const updateUserData = async (userId) => {
         console.log('updateUserData called with userId:', userId);
         const docRef = doc(usersRef, userId);
-        console.log('docRef created:', docRef);
         const docSnap = await getDoc(docRef);
-        console.log('docSnap received:', docSnap);
 
         if (docSnap.exists()) {
             console.log('docSnap exists');
             let data = docSnap.data();
-            console.log('data from docSnap:', data);
             setUser(currentUser => {
-                console.log('setUser called with currentUser:', currentUser);
-                console.log('merging with data:', data);
-                return { ...currentUser, ...data };
+                // Merge auth user data with firestore data and add the checked flag
+                return { ...currentUser, ...data, firestoreChecked: true };
             });
         } else {
+            // If the user document doesn't exist (e.g., new user),
+            // still update the user object to signal that the check is complete.
+            setUser(currentUser => {
+                return { ...currentUser, firestoreChecked: true };
+            });
             console.log('docSnap does not exist for userId:', userId);
         }
     }
 
+
     const login = async (email, password) => {
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
-
-
-            if (response.user) {
-                await updateUserData(response.user.uid);
-            }
-
+            // The onAuthStateChanged listener will handle the user data update.
             return { success: true };
         } catch (e) {
             let msg = e.message;
@@ -94,6 +88,8 @@ export const AuthContextProvider = ({ children }) => {
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
 
+            // The onAuthStateChanged listener will be triggered by the creation,
+            // but we still need to create the user's document in Firestore.
             await setDoc(doc(usersRef, response?.user?.uid), {
                 username,
                 userId: response?.user?.uid
@@ -107,8 +103,7 @@ export const AuthContextProvider = ({ children }) => {
         }
     }
 
-    // Saving skin profile details 
-
+    // Saving skin profile details
     const saveSkinProfile = async (skinProfileData) => {
         try {
             if (!user) {
@@ -120,6 +115,13 @@ export const AuthContextProvider = ({ children }) => {
             await updateDoc(userDocRef, {
                 skinProfile: skinProfileData
             });
+            
+            // Manually update the user state after saving the profile
+            // to ensure the UI can react immediately without another DB read.
+            setUser(currentUser => ({
+                ...currentUser,
+                skinProfile: skinProfileData
+            }));
 
             return { success: true, msg: "Skin profile saved successfully!" };
 
@@ -133,9 +135,6 @@ export const AuthContextProvider = ({ children }) => {
         console.log("Global routine state is being updated.");
         setRoutine(newRoutine);
     };
-
-
-
 
     // --- UPDATED GOOGLE SIGN-IN LOGIC ---
 
@@ -157,6 +156,7 @@ export const AuthContextProvider = ({ children }) => {
             signInWithCredential(auth, credential)
                 .then(userCredential => {
                     // This is where you could add new user data to Firestore if they are signing in for the first time
+                    // The onAuthStateChanged listener will handle the rest.
                     console.log("Successfully signed in to Firebase with Google!");
                 })
                 .catch(error => {

@@ -1,9 +1,9 @@
 import { View, Text, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { useAuth } from '../../context/authContext';
-import { analyzeProductByBarcode } from '../../utils/aiService';
-import Card from '../../components/Card';
+import { useAuth } from '../context/authContext';
+import { analyzeProductByBarcode } from '../utils/aiService';
+import Card from '../components/Card';
 import { ScrollView } from 'react-native-gesture-handler';
 
 export default function Analysis() {
