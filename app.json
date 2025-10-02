@@ -22,7 +22,7 @@
       "package": "com.swati.mahajan.SkinSyncApp"
     },
     "web": {
-      "favicon": "./assets/images/Gemini_Generated_Image_y38cjwy38cjwy38c 1.png"
+      "favicon": "./assets/images/AppLogo.svg"
     },
     "plugins": [
       "expo-router",

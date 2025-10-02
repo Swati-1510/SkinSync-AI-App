@@ -253,3 +253,67 @@ export const analyzeProductByBarcode = async (barcode, skinProfile) => {
         return { error: error.message || "An unexpected error occurred during AI analysis." };
     }
 };
+
+// ====================================================================
+// FUNCTION 4: Get AI Product Recommendations for a Search Term
+// ====================================================================
+export const searchProductsAI = async (searchTerm, skinProfile) => {
+    console.log(`--- AISERVICE: Searching for products with term: "${searchTerm}" ---`);
+
+    // We reuse the API_URL and GEMINI_API_KEY from the top of the file
+    if (!GEMINI_API_KEY) {
+        return [];
+    }
+
+    // --- The Search Prompt (The Logic) ---
+    const prompt = `
+        You are a highly intelligent skincare search expert. A user with this skin profile is searching for products: ${JSON.stringify(skinProfile)}.
+        Their search query is: "${searchTerm}".
+
+        Your task is to:
+        1. Analyze the search query (could be a product name, an ingredient, or a skin concern).
+        2. Find exactly 5 real, popular, and effective skincare products that best match this query.
+        3. Crucially, you MUST personalize the results based on the user's provided skin profile.
+        
+        For each of the 5 products, provide the brand, the full product name, an average rating out of 5, and a short, personalized tag.
+        
+        Format your response as a valid JSON object ONLY, with this structure:
+        { "products": [{"brand": "Brand Name", "name": "Full Product Name", "rating": 4.5, "tag": "✅ Relevant Tag"}] }
+    `;
+
+    const requestBody = {
+        "contents": [{ "parts": [{ "text": prompt }] }],
+        "generationConfig": { "responseMimeType": "application/json" }
+    };
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            // Log the detailed error response from the Gemini API
+            const errorBody = await response.json();
+            console.error("--- AISERVICE: ERROR from Gemini API (Search)! ---", JSON.stringify(errorBody, null, 2));
+            return []; // Return empty array as before
+        }
+
+        const result = await response.json();
+        const rawJsonString = result.candidates[0].content.parts[0].text;
+        
+        try {
+            const parsedJson = JSON.parse(rawJsonString);
+            return parsedJson.products || []; // Return the products array
+        } catch (parseError) {
+            console.error("--- AISERVICE: FAILED TO PARSE JSON (Search)! ---", parseError);
+            console.error("   - Raw String from AI:", rawJsonString);
+            return []; // Return empty array if parsing fails
+        }
+
+    } catch (error) {
+        console.error("Error fetching AI Search Results:", error);
+        return [];
+    }
+};

@@ -9,8 +9,11 @@ import Card from '../../components/Card';
 import GlassFullIcon from '../../assets/icons/FullGlass.svg';
 import GlassEmptyIcon from '../../assets/icons/EmptyGlass.svg';
 import { getTodaysLog, updateTodaysLog } from '../../utils/firestore';
+import { getTimeOfDay } from '../../utils/timeUtils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getCachedRoutine, setCachedRoutine } from '../../utils/cacheService';
 
-// Your Icon components...
+//Icon components...
 const WaterDropIcon = () => <Text>💧</Text>;
 const SparkleIcon = () => <Text>✨</Text>;
 const SunIcon = () => <Text>☀️</Text>;
@@ -30,8 +33,10 @@ const RoutineIcon = ({ stepTitle }) => {
 export default function Home() {
   const { user, logout, routine, updateUserRoutine } = useAuth();
   const router = useRouter();
+  const timeOfDay = getTimeOfDay();
 
-  const [activeTab, setActiveTab] = useState('AM');
+
+  const [activeTab, setActiveTab] = useState(timeOfDay.tab);
   const [dailyLog, setDailyLog] = useState({ waterIntake: 0, hoursSlept: 7.5 });
   const [isLoadingRoutine, setIsLoadingRoutine] = useState(true); // For a loading message
   const [aiTip, setAiTip] = useState("Loading your daily tip...");
@@ -50,9 +55,10 @@ export default function Home() {
   const handleSleepChange = (changeAmount) => {
     setDailyLog(prevState => {
       const currentHours = Number(prevState.hoursSlept) || 0;
-            let newHours = currentHours + changeAmount;
-      newHours = Math.max(0, newHours); // Don't allow negative hours
-      if (user?.uid) {
+      let newHours = currentHours + changeAmount;
+      newHours = Math.max(0, newHours);// Don't allow negative hours
+      newHours = Math.min(24, newHours); // This prevents more than 24 hours
+      if (newHours !== prevState.hoursSlept && user?.uid) {
         updateTodaysLog(user.uid, { hoursSlept: newHours });
       }
       return { ...prevState, hoursSlept: newHours };
@@ -62,27 +68,42 @@ export default function Home() {
   // --- FETCH AI ROUTINE useEffect (Corrected) ---
   useEffect(() => {
     const fetchRoutine = async () => {
-      if (user?.skinProfile && Object.keys(user.skinProfile).length > 0) {
-        setIsLoadingRoutine(true); // Start loading
+      if (user?.skinProfile) {
+        setIsLoadingRoutine(true);
+
+        // --- 1. CHECK THE CACHE FIRST ---
+        const cachedRoutine = await getCachedRoutine();
+
+        if (cachedRoutine) {
+          updateUserRoutine(cachedRoutine);
+          setIsLoadingRoutine(false);
+          console.log("Routine loaded from cache, skipping API call.");
+          return; // EXIT THE FUNCTION - SUCCESS!
+        }
+
+        // --- 2. CACHE FAILED/EXPIRED, CALL THE AI ---
         try {
-          console.log("--- 1. HOME: Preparing to call the AI with this profile: ---", user.skinProfile);
+          console.log("Cache expired or missing. Calling AI...");
           const aiRoutine = await generateDynamicRoutineFromAI(user.skinProfile);
 
-          console.log("--- 4. HOME: AI routine received successfully! ---", aiRoutine);
-          updateUserRoutine(aiRoutine);
+          // --- 3. SAVE TO CACHE AND GLOBAL STATE ---
+          await setCachedRoutine(aiRoutine); // Save the new result to AsyncStorage
+          updateUserRoutine(aiRoutine); // Update global state
 
+          console.log("AI Routine saved to cache and loaded.");
         } catch (error) {
-          console.error("--- 4. HOME: ERROR receiving routine from AI! ---", error);
-          // Optional: You could set an error message in the state to show the user
+          // ... (Your error handling) ...
+          console.error("Failed to fetch AI routine:", error);
+          // You might want to load a default static routine here if the AI fails
         } finally {
-          setIsLoadingRoutine(false); // Stop loading, whether it succeeded or failed
+          setIsLoadingRoutine(false);
         }
       } else {
-        setIsLoadingRoutine(false); // No profile, so not loading
+        setIsLoadingRoutine(false);
       }
     };
     fetchRoutine();
-  }, [user]);// Re-run when user data is available
+  }, [user]);
 
   useEffect(() => {
     const fetchAiTip = async () => {
@@ -123,34 +144,40 @@ export default function Home() {
       <View className="mb-8 flex-row">
         <Text
           style={{ fontSize: hp(3) }}
-          className="font-nunito-sans-bold text-dark-olive-green flex-1" // Add flex-1 here
-          numberOfLines={2} // Allows the text to wrap to a second line if needed
-        >
-          Great Morning, {user?.username || 'Guest'} 😊
+          className="font-nunito-sans-bold text-dark-olive-green flex-1"
+          numberOfLines={2}>
+          {timeOfDay.greeting}, {user?.username || 'Guest'}
+
         </Text>
+        <Text style={{ fontSize: hp(3) }}>😊</Text>
+      </View>
+
+      <View className="w-full flex-row justify-end mb-4">
+        <View className="flex-row bg-white border border-muted-khaki rounded-full p-[1px]">
+          {/* AM Button */}
+          <TouchableOpacity
+            onPress={() => setActiveTab('AM')}
+            className={activeTab === 'AM' ? "bg-primary rounded-full py-1.5 px-2" : "py-1.5 px-2"}
+          >
+            <Text className={activeTab === 'AM' ? "text-white font-bold text-xs" : "text-muted-khaki font-bold text-xs"}>☀️ AM</Text>
+          </TouchableOpacity>
+          {/* PM Button */}
+          <TouchableOpacity
+            onPress={() => setActiveTab('PM')}
+            className={activeTab === 'PM' ? "bg-primary rounded-full py-1.5 px-2" : "py-1.5 px-2"}
+          >
+            <Text className={activeTab === 'PM' ? "text-white font-bold text-xs" : "text-muted-khaki font-bold text-xs"}>🌙 PM</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* --- 2. "Your Routine for Today" Card --- */}
-      <Card>
-        {/* Card Header: Title and AM/PM Toggle */}
-        <View className="flex-row justify-between items-center mb-4">
-          <Text style={{ fontSize: hp(2.2) }} className="font-nunito-sans-bold text-dark-olive-green">
+      <Card >
+        {/* Card Header: Title */}
+        <View className="justify-between items-center mb-4">
+          <Text style={{ fontSize: hp(2.5) }} className="font-nunito-sans-bold text-dark-olive-green text-center mb-4">
             Your Routine for Today
           </Text>
-          <View className="flex-row bg-white border border-muted-khaki rounded-full p-[1px]">
-            <TouchableOpacity
-              onPress={() => setActiveTab('AM')}
-              className={activeTab === 'AM' ? "bg-primary rounded-full py-1 px-2" : "py-1 px-3"}
-            >
-              <Text className={activeTab === 'AM' ? "text-white font-bold text-xs" : "text-muted-khaki font-bold text-xs"}>AM</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setActiveTab('PM')}
-              className={activeTab === 'PM' ? "bg-primary rounded-full py-1 px-2" : "py-1 px-3"}
-            >
-              <Text className={activeTab === 'PM' ? "text-white font-bold text-xs" : "text-muted-khaki font-bold text-xs"}>PM</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Routine List */}
@@ -230,11 +257,19 @@ export default function Home() {
         <View className="flex-row justify-between items-center mb-5">
           <Text className="text-muted-khaki text-base">Hours Slept:</Text>
           <View className="flex-row gap-x-4 items-center">
-            <TouchableOpacity onPress={() => handleSleepChange(- 0.5)} className="border border-muted-khaki w-8 h-8 rounded-full justify-center items-center">
+            <TouchableOpacity
+              onPress={() => handleSleepChange(- 0.5)}
+              // Opacity is 50% if the value is 0
+              style={{ opacity: dailyLog.hoursSlept === 0 ? 0.5 : 1 }}
+              className="border border-muted-khaki w-8 h-8 rounded-full justify-center items-center">
               <MinusIcon />
             </TouchableOpacity>
-            <Text className="text-muted-khaki text-lg font-nunito-sans-semibold">{dailyLog.hoursSlept} hrs</Text>
-            <TouchableOpacity onPress={() => handleSleepChange(0.5)} className="border border-muted-khaki w-8 h-8 rounded-full justify-center items-center">
+            <Text style={{ width: wp(20), textAlign: 'center' }} className="text-muted-khaki text-lg font-nunito-sans-semibold">{dailyLog.hoursSlept} hrs</Text>
+            <TouchableOpacity
+              onPress={() => handleSleepChange(0.5)}
+              // Opacity is 50% if the value is 24
+              style={{ opacity: dailyLog.hoursSlept === 24 ? 0.5 : 1 }}
+              className="border border-muted-khaki w-8 h-8 rounded-full justify-center items-center">
               <PlusIcon />
             </TouchableOpacity>
           </View>
@@ -249,7 +284,7 @@ export default function Home() {
 
       {/* --- 6. "From the Glow Circle" Card --- */}
       <Card style={{ marginTop: hp(2.5) }}>
-        <Text style={{ fontSize: hp(2.5) }} className="font-nunito-sans-bold text-dark-olive-green mb-4">
+        <Text style={{ fontSize: hp(2.5) }} className="font-nunito-sans-bold text-dark-olive-green text-center mb-4">
           From the Glow Circle
         </Text>
         {/* Top-Rated Review */}
