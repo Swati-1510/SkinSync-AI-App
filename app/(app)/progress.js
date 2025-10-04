@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getDocs, collection, query, where, orderBy } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { doc, collection, getDocs, addDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/authContext';
 import { getTodaysDateString } from '../../utils/firestore';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -10,6 +9,9 @@ import Card from '../../components/Card';
 import JournalEntryModal from '../../components/JournalEntryModal';
 import { saveJournalEntry, getJournalEntriesFromDB } from '../../utils/firestore';
 import LineChartCard from '../../components/LineChartCard';
+import { uploadPhoto } from '../../utils/storageService'; 
+// import * as ImagePicker from 'expo-image-picker'; 
+
 
 // --- The Main Component ---
 const ProgressPage = () => {
@@ -22,6 +24,91 @@ const ProgressPage = () => {
     const [chartData, setChartData] = useState({ dates: [], water: [], sleep: [] });
     const primaryColor = (opacity = 1) => `rgba(250, 114, 104, ${opacity})`; // Living Coral
     const waterColor = (opacity = 1) => `rgba(66, 133, 244, ${opacity})`; // A blue color for water
+    const [photoEntries, setPhotoEntries] = useState([]); // State for live photo data
+    const [isUploading, setIsUploading] = useState(false); // State for loading indicator
+    
+    const fetchPhotoEntries = async () => {
+    if (!user?.uid) return;
+    try {
+        const q = query(
+            collection(db, "progressPhotos"),
+            where("userId", "==", user.uid),
+            orderBy("createdAt", "desc") // Sort by the creation time
+        );
+        const querySnapshot = await getDocs(q);
+
+        const entries = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                // Use the Firebase Timestamp to format the date
+                date: data.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                uri: data.url, // The public download URL
+            };
+        });
+        setPhotoEntries(entries);
+    } catch (e) {
+        console.error("Error fetching photos:", e);
+    }
+};
+
+// Use a useEffect to load the photos when the user is available
+useEffect(() => {
+    if (user?.uid) {
+        fetchPhotoEntries();
+    }
+}, [user]);
+
+const handleAddPhoto = async () => {
+    // 1. Check/request media library permissions
+     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+        alert('Permission to access media library is required for photo upload!');
+        return;
+    }
+
+    // 2. Open the image picker/camera roll
+    let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+    });
+
+    if (result.canceled) return; // User cancelled the selection
+
+    const newPhoto = {
+        id: Date.now().toString(), // Unique ID
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // e.g., Oct 03
+        uri: result.assets[0].uri, // The local file path
+    };
+
+    setPhotoEntries(prevPhotos => [newPhoto, ...prevPhotos]);
+
+    // 3. Start the upload process
+    setIsUploading(true);
+    try {
+        const localUri = result.assets[0].uri;
+        // Upload the photo and get the public URL
+        const publicUrl = await uploadPhoto(localUri, user.uid); 
+
+        // 4. Save the record to Firestore
+        await addDoc(collection(db, "progressPhotos"), {
+            userId: user.uid,
+            url: publicUrl,
+            createdAt: serverTimestamp(), // Use server timestamp for accurate sorting
+        });
+
+        // 5. Refresh the list to show the new photo
+        await fetchPhotoEntries(); 
+
+    } catch (e) {
+        console.error("Photo upload/save failed:", e);
+        alert("Failed to save photo. Check internet and storage rules.");
+    } finally {
+        setIsUploading(false);
+    }
+};
 
     // --- Data Loading Logic ---
     // Function to fetch journal entries from the database
@@ -139,30 +226,39 @@ const ProgressPage = () => {
     );
 
     const renderPhotosContent = () => (
-        <View className="flex-1">
-            <TouchableOpacity style={{ height: hp(6.5) }} className="bg-primary rounded-full items-center justify-center my-6 mx-4">
-                <Text style={{ fontSize: 16 }} className="text-white font-nunito-sans-bold">[ + ] Add Today's Photo</Text>
-            </TouchableOpacity>
+    <View className="flex-1">
+        <TouchableOpacity 
+            onPress={handleAddPhoto} 
+            style={{ height: hp(6.5) }} 
+            className="bg-primary rounded-full items-center justify-center my-6 mx-4"
+        >
+            <Text style={{ fontSize: 16 }} className="text-white font-nunito-sans-bold">[ + ] Add Today's Photo</Text>
+        </TouchableOpacity>
 
-            <ScrollView contentContainerStyle={{ paddingHorizontal: wp(4) }}>
-                <View className="flex-row flex-wrap justify-between">
-                    {/* Using dummy data for now */}
-                    {photoData.map(photo => (
-                        <TouchableOpacity key={photo.id} style={{ width: wp(44), marginBottom: wp(4) }} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                            <Image source={{ uri: photo.uri }} style={{ height: hp(20) }} />
-                            <View className="p-3">
-                                <Text style={{ fontSize: 14, color: '#B2AC88' }} className="font-nunito-sans-regular">🗓️ {photo.date}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </ScrollView>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: wp(4) }}>
+            <View className="flex-row flex-wrap justify-between">
+                {/* --- MAP OVER LIVE LOCAL PHOTO DATA --- */}
+                {photoEntries.map(photo => (
+                    <TouchableOpacity key={photo.id} style={{ width: wp(44), marginBottom: wp(4) }} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                        <Image source={{ uri: photo.uri }} style={{ height: hp(20) }} />
+                        <View className="p-3">
+                            <Text style={{ fontSize: 14, color: '#B2AC88' }} className="font-nunito-sans-regular">🗓️ {photo.date}</Text>
+                        </View>
+                    </TouchableOpacity>
+                ))}
+                {/* Show a placeholder message if the list is empty */}
+                {photoEntries.length === 0 && (
+                    <Text className="text-sage mt-10 w-full text-center">Tap the button above to add your first progress photo!</Text>
+                )}
+            </View>
+        </ScrollView>
 
-            <TouchableOpacity style={{ width: 56, height: 56, bottom: hp(4), right: wp(4) }} className="absolute bg-primary rounded-full items-center justify-center shadow-lg">
-                <Text style={{ fontSize: 24, color: 'white' }}>◨</Text>
-            </TouchableOpacity>
-        </View>
-    );
+        {/* The Compare FAB button (static, no logic change) */}
+        <TouchableOpacity style={{ width: 56, height: 56, bottom: hp(4), right: wp(4) }} className="absolute bg-primary rounded-full items-center justify-center shadow-lg">
+            <Text style={{ fontSize: 24, color: 'white' }}>◨</Text>
+        </TouchableOpacity>
+    </View>
+);
 
     const renderJournalContent = () => (
         <ScrollView contentContainerStyle={{ paddingHorizontal: wp(4), paddingTop: hp(3), paddingBottom: hp(10) }}>
