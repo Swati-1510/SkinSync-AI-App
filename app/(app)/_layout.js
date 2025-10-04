@@ -101,6 +101,8 @@ export default function AppLayout() {
 
        {/* Quiz Screen (Hidden from tabs, but accessible via router.replace) */}
        <Tabs.Screen name="quiz" options={{ href: null }} />
+       <Tabs.Screen name="scanner" options={{ href: null }} /> 
+       <Tabs.Screen name="analysis" options={{ href: null }} />
     </Tabs>
   );
 }

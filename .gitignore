@@ -41,3 +41,5 @@ app-example
 # Environment variables
 .env
 
+/android
+/ios

@@ -305,10 +305,6 @@ export default function Home() {
         </View>
       </Card>
 
-      {/* --- 7. Sign Out Button (for testing) --- */}
-      <TouchableOpacity onPress={logout} className="mt-8">
-        <Text className="text-center text-primary font-bold">Sign Out</Text>
-      </TouchableOpacity>
 
     </ScrollView>
   );

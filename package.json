@@ -26,7 +26,9 @@
     "babel-plugin-module-resolver": "^5.0.2",
     "expo": "^54.0.10",
     "expo-auth-session": "~7.0.8",
+    "expo-barcode-scanner": "^13.0.1",
     "expo-blur": "~15.0.7",
+    "expo-camera": "~17.0.8",
     "expo-constants": "~18.0.9",
     "expo-crypto": "~15.0.7",
     "expo-dev-client": "~6.0.13",
@@ -61,16 +63,17 @@
     "react-native-web": "^0.21.0",
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
+    "react-native-worklets-core": "^1.6.2",
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
+    "@react-native-community/cli": "^20.0.2",
     "@types/estree": "^1.0.8",
     "@types/json-schema": "^7.0.15",
     "@types/react": "~19.1.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "react-native-svg-transformer": "^1.5.1",
-    "react-native-worklets-core": "^0.4.0",
     "typescript": "~5.9.2"
   },
   "private": true

@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { doc, collection, getDocs, addDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/authContext';
-import { getTodaysDateString } from '../../utils/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'; 
+import { db } from '../../firebaseConfig'; 
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Card from '../../components/Card';
 import JournalEntryModal from '../../components/JournalEntryModal';
-import { saveJournalEntry, getJournalEntriesFromDB } from '../../utils/firestore';
+import { getJournalEntriesFromDB, saveJournalEntry, fetchLifestyleData } from '../../utils/firestore'; 
 import LineChartCard from '../../components/LineChartCard';
+import * as ImagePicker from 'expo-image-picker';
 import { uploadPhoto } from '../../utils/storageService'; 
-// import * as ImagePicker from 'expo-image-picker'; 
 
 
 // --- The Main Component ---
@@ -61,8 +61,8 @@ useEffect(() => {
 
 const handleAddPhoto = async () => {
     // 1. Check/request media library permissions
-     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
+     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync(); 
+     if (status !== 'granted') {
         alert('Permission to access media library is required for photo upload!');
         return;
     }
@@ -76,38 +76,19 @@ const handleAddPhoto = async () => {
     });
 
     if (result.canceled) return; // User cancelled the selection
-
+    
+    const localUri = result.assets[0].uri;
     const newPhoto = {
         id: Date.now().toString(), // Unique ID
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // e.g., Oct 03
-        uri: result.assets[0].uri, // The local file path
+        uri: localUri, // The local file path
     };
 
     setPhotoEntries(prevPhotos => [newPhoto, ...prevPhotos]);
 
-    // 3. Start the upload process
-    setIsUploading(true);
-    try {
-        const localUri = result.assets[0].uri;
-        // Upload the photo and get the public URL
-        const publicUrl = await uploadPhoto(localUri, user.uid); 
+    console.log("Photo added locally. Storage upload skipped (Free Tier Model).");
 
-        // 4. Save the record to Firestore
-        await addDoc(collection(db, "progressPhotos"), {
-            userId: user.uid,
-            url: publicUrl,
-            createdAt: serverTimestamp(), // Use server timestamp for accurate sorting
-        });
-
-        // 5. Refresh the list to show the new photo
-        await fetchPhotoEntries(); 
-
-    } catch (e) {
-        console.error("Photo upload/save failed:", e);
-        alert("Failed to save photo. Check internet and storage rules.");
-    } finally {
-        setIsUploading(false);
-    }
+    
 };
 
     // --- Data Loading Logic ---
@@ -148,62 +129,20 @@ const handleAddPhoto = async () => {
         }
     };
 
-    const getStartDate = (period) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (period === 'Weekly' ? 7 : 30)); // Subtract 7 or 30 days
-        return d.toISOString().split('T')[0];
-    };
-
-    const fetchLifestyleData = async (period) => {
-        if (!user?.uid) return;
-        try {
-            const startDateStr = getStartDate(period);
-            const endDateStr = new Date().toISOString().split('T')[0];
-
-            // --- Firestore Query to get the relevant logs ---
-            // NOTE: Firestore queries are complex. For now, we'll fetch all and filter locally for simplicity.
-            const q = query(
-                collection(db, "dailyLogs"),
-                where("userId", "==", user.uid),
-                orderBy("date", "desc"), // Order by date to get the latest first
-                // You can add a limit here to keep the query fast
-            );
-            const querySnapshot = await getDocs(q);
-
-            const logs = querySnapshot.docs.map(doc => doc.data());
-
-            // --- Data Formatting Logic ---
-            const dates = [];
-            const water = [];
-            const sleep = [];
-
-            // We only take the logs within the requested period
-            const relevantLogs = logs.filter(log => log.date >= startDateStr && log.date <= endDateStr);
-
-            // Sort them for the chart (oldest to newest)
-            relevantLogs.sort((a, b) => (a.date > b.date) ? 1 : -1);
-
-            relevantLogs.forEach(log => {
-                dates.push(log.date.substring(5).replace('-', '/')); // e.g., '10/27'
-                water.push(log.waterIntake || 0);
-                sleep.push(log.hoursSlept || 0);
-            });
-
-            setChartData({ dates, water, sleep });
-
-        } catch (e) {
-            console.error("Error fetching lifestyle data:", e);
-            setChartData({ dates: [], water: [], sleep: [] });
-        }
-    };
-
-    // --- UseEffect to trigger the fetch ---
+    // --- FIX: useEffect to fetch Lifestyle Data when period changes ---
     useEffect(() => {
         if (user?.uid) {
-            // Fetch data whenever the period changes or the user object loads
-            fetchLifestyleData(lifestylePeriod);
+            // Call the imported service function, passing the user ID and the period
+            fetchLifestyleData(user.uid, lifestylePeriod) 
+                .then(data => {
+                    setChartData(data); // Assume data is { dates: [...], water: [...], sleep: [...] }
+                })
+                .catch(e => {
+                    console.error("Error fetching lifestyle data:", e);
+                    setChartData({ dates: [], water: [], sleep: [] });
+                });
         }
-    }, [user, lifestylePeriod]); // lifestylePeriod is now a dependency
+    }, [user, lifestylePeriod]); // Run when user or period changes
 
 
     // ====================================================================
