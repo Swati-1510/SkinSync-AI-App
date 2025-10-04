@@ -1,25 +1,17 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { Camera, CameraView } from 'expo-camera';
+import { View, Text, StyleSheet, TouchableOpacity, Button } from 'react-native';
+import React, { useState } from 'react';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 
 export default function Scanner() {
-    const [hasPermission, setHasPermission] = useState(null);
+    // 1. Use the new permissions hook instead of useEffect
+    const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
     const router = useRouter();
 
-    // 1. Request camera permission
-    useEffect(() => {
-        const getBarCodeScannerPermissions = async () => {
-            const { status } = await BarCodeScanner.requestPermissionsAsync();
-            setHasPermission(status === 'granted');
-        };
-        getBarCodeScannerPermissions();
-    }, []);
-
-    // 2. Handler for a successful scan
-    const handleBarCodeScanned = ({ type, data }) => {
+    // 2. Handler for a successful scan (your logic was already good)
+    const handleBarcodeScanned = ({ type, data }) => {
         if (!scanned) {
             setScanned(true); // Stop scanning immediately
             console.log(`Barcode Scanned: Type=${type}, Data=${data}`);
@@ -29,20 +21,31 @@ export default function Scanner() {
         }
     };
 
-    // --- UI Logic ---
-    if (hasPermission === null) {
-        return <View style={styles.permissionContainer}><Text>Requesting camera permission...</Text></View>;
+    // --- UI Logic based on the new hook ---
+    if (!permission) {
+        // Camera permissions are still loading.
+        return <View style={styles.permissionContainer} />;
     }
-    if (hasPermission === false) {
-        return <View style={styles.permissionContainer}><Text>No access to camera. Please enable in settings.</Text></View>;
+
+    if (!permission.granted) {
+        // Camera permissions are not granted yet.
+        return (
+            <View style={styles.permissionContainer}>
+                <Text style={{ textAlign: 'center' }}>We need your permission to show the camera</Text>
+                <Button onPress={requestPermission} title="Grant Permission" />
+            </View>
+        );
     }
 
     return (
         <View style={styles.container}>
             {/* The Camera View - fills the screen */}
             <CameraView
-                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
                 style={StyleSheet.absoluteFillObject}
+                barcodeScannerSettings={{
+                    barcodeTypes: ["qr", "ean13", "upc_a", "upc_e"], // Specify common barcode types
+                }}
             />
 
             {/* Overlay for instructions and back button */}

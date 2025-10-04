@@ -26,7 +26,6 @@
     "babel-plugin-module-resolver": "^5.0.2",
     "expo": "^54.0.10",
     "expo-auth-session": "~7.0.8",
-    "expo-barcode-scanner": "^13.0.1",
     "expo-blur": "~15.0.7",
     "expo-camera": "~17.0.8",
     "expo-constants": "~18.0.9",
