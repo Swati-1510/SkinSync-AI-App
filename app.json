@@ -6,21 +6,9 @@
     "orientation": "portrait",
     "scheme": "skinsyncaiapp",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/Gemini_Generated_Image_y38cjwy38cjwy38c 1.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.swati.mahajan.SkinSyncApp"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.swati.mahajan.SkinSyncApp"
-    },
+    
+    
+    
     "web": {
       "favicon": "./assets/images/AppLogo.svg"
     },
