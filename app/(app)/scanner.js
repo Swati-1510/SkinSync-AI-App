@@ -11,9 +11,19 @@ export default function Scanner() {
     const [scanned, setScanned] = useState(false);
     const router = useRouter();
     const isFocused = useIsFocused();
-
     // --- Animation for the scanning line ---
     const scanAnimation = useRef(new Animated.Value(0)).current;
+
+     // This effect runs whenever the user enters or leaves the screen.
+    useEffect(() => {
+        // When the screen comes into focus (the user navigates to it)
+        if (isFocused) {
+            // Reset the 'scanned' state to false. This "issues a new ticket"
+            // and re-enables the onBarcodeScanned prop.
+            setScanned(false);
+            console.log("Scanner reset and ready for a new scan.");
+        }
+    }, [isFocused]); // The hook's dependency is the isFocused boolean
 
     useEffect(() => {
         let animation;

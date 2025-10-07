@@ -12,6 +12,7 @@ import { getTodaysLog, updateTodaysLog } from '../../utils/firestore';
 import { getTimeOfDay } from '../../utils/timeUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCachedRoutine, setCachedRoutine } from '../../utils/cacheService';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 //Icon components...
 const WaterDropIcon = () => <Text>💧</Text>;
@@ -143,7 +144,7 @@ export default function Home() {
       {/* --- 1. The Greeting --- */}
       <View className="mb-8 flex-row">
         <Text
-          style={{ fontSize: hp(3.5) }}
+          style={{ fontSize: hp(3.3) }}
           className="font-nunito-sans-bold text-dark-olive-green flex-1"
           numberOfLines={2}>
           {timeOfDay.greeting}, {user?.username || 'Guest'}

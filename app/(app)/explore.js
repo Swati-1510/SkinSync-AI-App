@@ -1,16 +1,17 @@
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking'; // <-- ADD THIS IMPORT
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import BarcodeScanner from '../../assets/icons/BarcodeScanner.svg';
 import ExploreIcon from '../../assets/icons/ExploreIcon.svg';
 import StarIcon from '../../assets/icons/StarIcon.svg';
+import ProductPlaceholder from '../../assets/images/Product Placeholder.png';
 import Card from '../../components/Card';
-import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/authContext';
 import { getAiProductRecommendations, searchProductsAI } from '../../utils/aiService';
 import useDebounce from '../../utils/useDebounce';
-import ProductPlaceholder from '../../assets/images/Product Placeholder.png';
 
 
 // --- Static Data for UI Building ---
@@ -53,23 +54,25 @@ const renderProductCard = ({ item }) => (
                     </View>
 
                     {/* Bottom Block (Rating and Tag) */}
-                    <View className="flex-col">
+                    <View className="flex-col"> 
                         {/* Ratings */}
                         <View className="flex-row items-center mb-2">
                             <StarIcon width={16} height={16} fill="#FFD700" />
                             <Text style={{ color: '#B2AC88' }} className="text-xs ml-1 font-nunito-sans-bold">{item.rating}</Text>
                         </View>
-
+                        
                         {/* Personalized Tag */}
                         <View
                             style={{ backgroundColor: '#D0F0C0', alignSelf: 'flex-start' }}
-                            className="rounded-full py-1 px-3 flex-row items-center"
+                            className="rounded-lg py-1 px-3 flex-row items-left"
                         >
                             <Text className="text-green-800 font-bold text-sm mr-1">✅</Text>
-                            <Text className="text-dark-olive-green font-nunito-sans-bold flex-shrink" style={{ fontSize: hp(1.3) }}>
-                                {item.tag.replace('✅', '').trim()}
+                            <Text style={{ fontSize: hp(1.3), flexShrink: 1 }}
+                                className="text-dark-olive-green font-nunito-sans-bold">
+                                {item.tag.replace('✅', '').trim()} 
                             </Text>
                         </View>
+                        
                     </View>
                 </View>
             </Card>
@@ -241,6 +244,15 @@ const Explore = () => {
                                 {products.map((product, index) => (
                                     <View key={`${product.name}-${index}`}>
                                         {renderProductCard({ item: product })}
+                                        <View className="flex-row justify-center">
+                                            <TouchableOpacity
+                                                    onPress={() => Linking.openURL(`https://www.google.com/search?q=${product.name} buy`)} 
+                                                style={{ marginTop: 10, width: wp(40), paddingVertical: hp(1.5) }}
+                                                className="bg-primary rounded-full items-center"
+                                            >
+                                                <Text className="text-white font-nunito-sans-bold text-xs">View Product →</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 ))}
                             </View>

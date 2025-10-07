@@ -236,8 +236,8 @@ export const getAiProductRecommendations = async (skinProfile) => {
         You are a skincare product recommendation expert.
         Based on this user's skin profile: ${JSON.stringify(skinProfile)},
         recommend exactly 4 real, popular products.
-        Format your response as a valid JSON object ONLY, like this:
-        { "products": [{"brand": "Brand Name", "name": "Full Product Name", "rating": 4.5, "tag": "✅ Good for Acne"}] }
+        Format your response as a valid JSON object ONLY, with this structure:
+        { "products": [{"brand": "Brand Name", "name": "Full Product Name", "rating": 4.5, "tag": "✅ Good for Acne", "url": "Product URL Here"}] }
     `;
 
     const requestBody = {
@@ -294,10 +294,10 @@ export const searchProductsAI = async (searchTerm, skinProfile) => {
         2. Find exactly 5 real, popular, and effective skincare products that best match this query.
         3. Crucially, you MUST personalize the results based on the user's provided skin profile.
         
-        For each of the 5 products, provide the brand, the full product name, an average rating out of 5, and a short, personalized tag.
+        For each of the 5 products, provide the brand, the full product name, an average rating out of 5, a short, personalized tag, and a URL to view the product.
         
         Format your response as a valid JSON object ONLY, with this structure:
-        { "products": [{"brand": "Brand Name", "name": "Full Product Name", "rating": 4.5, "tag": "✅ Relevant Tag"}] }
+        { "products": [{"brand": "Brand Name", "name": "Full Product Name", "rating": 4.5, "tag": "✅ Relevant Tag", "url": "Product URL Here"}] }
     `;
 
     const requestBody = {

@@ -121,7 +121,7 @@ export default function Analysis() {
                 </View>
             </Card>
             
-            <TouchableOpacity onPress={() => router.back()} className="mt-8 bg-white border border-primary rounded-full py-3 px-6">
+            <TouchableOpacity onPress={() => router.push('/(app)/explore')} className="mt-8 bg-white border border-primary rounded-full py-3 px-6">
                 <Text className="text-primary font-bold text-center">Done</Text>
             </TouchableOpacity>
         </ScrollView>
