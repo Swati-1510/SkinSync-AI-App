@@ -16,6 +16,7 @@ import DocIcon from '../../assets/icons/DocIcon.svg'; // Placeholder for Terms/P
 import LockShieldIcon from '../../assets/icons/LockShieldIcon.svg'; // Placeholder for Privacy Policy
 import MessageIcon from '../../assets/icons/MessageIcon.svg'; // Placeholder for Reviews
 import BookmarkIcon from '../../assets/icons/BookmarkIcon.svg'; // Placeholder for Saved Products
+import UserIcon from '../../assets/icons/UserIcon.svg'; // Placeholder for user avatar
 
 const colors = {
     primary: '#FA7268',
@@ -54,13 +55,17 @@ export default function Profile() {
             </Text>
 
             {/* --- 1. User Info Card --- */}
-            <Card className="flex-row items-center p-4 mb-8">
+            <Card className="flex-col items-center justify-center p-4 mb-8">
                 {/* Placeholder for Avatar */}
-                <View className="w-16 h-16 bg-white rounded-full border-2 border-primary mr-4 overflow-hidden">
-                    {/* Placeholder image or the user's uploaded avatar */}
-                    <Image source={{ uri: 'YOUR_AVATAR_URI' }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                <View className="w-16 h-16 bg-white rounded-full border-2 border-primary mb-2 overflow-hidden justify-center items-center">
+                    {/* If user has an avatar, use Image; otherwise, show UserIcon */}
+                    {user?.avatarUrl ? (
+                        <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    ) : (
+                        <UserIcon width={wp(8)} height={hp(4)} color={colors.sage} />
+                    )}
                 </View>
-                <View>
+                <View className="items-center">
                     <Text style={{ fontSize: hp(2.5) }} className="font-nunito-sans-bold text-dark-olive-green">
                         {user?.username || 'Swati Mahajan'}
                     </Text>
@@ -71,9 +76,9 @@ export default function Profile() {
             </Card>
 
             {/* --- 2. ACCOUNT Section --- */}
-            <Text className="text-sage font-bold text-sm mb-2">ACCOUNT</Text>
+            <Text className="text-sage font-bold text-lg mb-2 text-center">ACCOUNT</Text>
             <Card style={{ padding: 0 }} className="mb-6">
-                <MenuItem icon={EditIcon} title="Edit Profile" onPress={() => console.log('NAVIGATE TO EDIT SCREEN')} />
+                <MenuItem icon={EditIcon} title="Edit Profile" onPress={() => router.push('/(app)/editProfile')} />
                 <View className="h-[1px] bg-gray-200 mx-4" />
                 <MenuItem icon={DnaIcon} title="My Skin Genome" onPress={() => router.push('/(app)/quiz')} />
                 <View className="h-[1px] bg-gray-200 mx-4" />
@@ -83,7 +88,7 @@ export default function Profile() {
             </Card>
 
             {/* --- 3. APP Section --- */}
-            <Text className="text-sage font-bold text-sm mb-2">APP</Text>
+            <Text className="text-sage font-bold text-lg mb-2 text-center">APP</Text>
             <Card style={{ padding: 0 }} className="mb-6">
                 <MenuItem icon={DocIcon} title="Terms of Service" onPress={() => console.log('NAVIGATE TO TERMS')} />
                 <View className="h-[1px] bg-gray-200 mx-4" />
@@ -91,7 +96,7 @@ export default function Profile() {
             </Card>
 
             {/* --- 4. COMMUNITY Section --- */}
-            <Text className="text-sage font-bold text-sm mb-2">COMMUNITY</Text>
+            <Text className="text-sage font-bold text-lg mb-2 text-center">COMMUNITY</Text>
             <Card style={{ padding: 0 }} className="mb-6">
                 <MenuItem icon={MessageIcon} title="My Reviews" onPress={() => console.log('NAVIGATE TO REVIEWS')} />
                 <View className="h-[1px] bg-gray-200 mx-4" />
@@ -101,7 +106,8 @@ export default function Profile() {
             {/* --- Log Out Button --- */}
             <TouchableOpacity 
                 onPress={logout} 
-                style={{ height: hp(7), backgroundColor: colors.lightCoral, borderColor: colors.primary }}
+                style={{ height: hp(7), 
+                     borderColor: colors.primary }}
                 className="mt-6 rounded-full justify-center items-center border"
             >
                 <Text style={{ fontSize: hp(2.2) }} className="text-primary font-bold tracking-wider">Log Out</Text>

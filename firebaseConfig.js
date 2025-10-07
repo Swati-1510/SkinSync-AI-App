@@ -47,3 +47,4 @@ export const usersRef = collection(db, 'users');
 export const roomRef = collection(db, 'rooms');
 
 // Any other Firebase services you want to use
+

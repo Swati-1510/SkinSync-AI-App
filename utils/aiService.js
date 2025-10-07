@@ -4,6 +4,117 @@ import fetch from 'cross-fetch';
 // --- Global Configuration ---
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+// ✅ NEW HELPER FUNCTION to avoid repeating the Gemini analysis logic
+async function _analyzeIngredientsWithGemini(ingredients, productName, skinProfile) {
+  console.log(`   - Sending ingredients for "${productName}" to Gemini for analysis...`);
+  if (!GEMINI_API_KEY) {
+    throw new Error("Gemini API key is not configured.");
+  }
+  
+  const prompt = `
+      You are a skincare ingredient analysis expert for an app called SkinSync AI.
+      A user with this skin profile is asking about a product: ${JSON.stringify(skinProfile)}.
+      The product is called "${productName}".
+      The ingredients are: "${ingredients}".
+
+      Your task is to:
+      1.  Analyze this ingredient list based on the user's specific skin profile.
+      2.  Provide a simple, one-word verdict from these three options ONLY: "Good Match", "Use with Caution", or "Not Recommended".
+      3.  Provide a simple, one-sentence analysis explaining your verdict.
+      4.  Identify and list up to 3 "Notable Ingredients" (either good or bad) and explain in one simple sentence why each is notable for this specific user.
+
+      Format your response as a valid JSON object ONLY, with this structure:
+      {
+          "productName": "${productName}",
+          "verdict": "Good Match",
+          "analysis": "This product appears to be a good fit for your skin goals.",
+          "notableIngredients": [
+              {"name": "Niacinamide", "reason": "Excellent for controlling oil and minimizing pores."},
+              {"name": "Fragrance", "reason": "Can be a potential irritant for your sensitive skin."}
+          ]
+      }
+  `;
+  
+  const requestBody = {
+    "contents": [{ "parts": [{ "text": prompt }] }],
+    "generationConfig": { "responseMimeType": "application/json" }
+  };
+
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json();
+    console.error("Gemini API Error:", errorBody);
+    throw new Error("The AI analysis service is currently unavailable.");
+  }
+
+  const result = await response.json();
+
+  if (!result.candidates || !result.candidates[0]?.content?.parts[0]?.text) {
+    console.error("Invalid response structure from Gemini.");
+    throw new Error("The AI returned an unexpected response format.");
+  }
+
+  const rawJsonString = result.candidates[0].content.parts[0].text;
+  console.log("   - AI Analysis Received.");
+  return JSON.parse(rawJsonString);
+}
+
+
+// ✅ REWRITTEN FUNCTION with Hybrid Approach
+export const analyzeProductByBarcode = async (barcode, skinProfile) => {
+  console.log(`--- AISERVICE: Analyzing barcode with hybrid approach: ${barcode} ---`);
+
+  // Step 1: Define API endpoints
+  const BEAUTY_API_URL = `https://world.openbeautyfacts.org/api/v2/product/${barcode}?fields=product_name,ingredients_text_en`;
+  const FOOD_API_URL = `https://world.openfoodfacts.org/api/v2/product/${barcode}?fields=product_name,ingredients_text_en`;
+
+  try {
+    // Step 2: Try fetching from the primary source (Open Beauty Facts)
+    console.log("   - Attempting to fetch from Open Beauty Facts...");
+    const beautyResponse = await fetch(BEAUTY_API_URL);
+    if (beautyResponse.ok) {
+        const beautyData = await beautyResponse.json();
+        if (beautyData.status === 1 && beautyData.product?.ingredients_text_en) {
+            console.log(`   - SUCCESS: Found product on Open Beauty Facts: ${beautyData.product.product_name}`);
+            const ingredients = beautyData.product.ingredients_text_en;
+            const productName = beautyData.product.product_name || "Unknown Product";
+            return await _analyzeIngredientsWithGemini(ingredients, productName, skinProfile);
+        }
+    }
+    
+    // Step 3: If primary fails, try fallback source (Open Food Facts)
+    console.log("   - FAILED: Product not on Open Beauty Facts. Trying fallback...");
+    const foodResponse = await fetch(FOOD_API_URL);
+     if (foodResponse.ok) {
+        const foodData = await foodResponse.json();
+        if (foodData.status === 1 && foodData.product?.ingredients_text_en) {
+            console.log(`   - SUCCESS: Found product on Open Food Facts: ${foodData.product.product_name}`);
+            const ingredients = foodData.product.ingredients_text_en;
+            const productName = foodData.product.product_name || "Unknown Product";
+            return await _analyzeIngredientsWithGemini(ingredients, productName, skinProfile);
+        }
+    }
+
+    // Step 4: If both failed, return the final "NOT_FOUND" error
+    console.error("   - FAILED: Product not found on any database.");
+    return {
+      error: 'NOT_FOUND',
+      message: "This product isn't in our public databases yet. You can add the ingredients manually to get an analysis."
+    };
+
+  } catch (error) {
+    // Step 5: Handle network or other unexpected errors
+    console.error("--- AISERVICE: CATCH BLOCK ERROR (Barcode Analysis)! ---", error);
+    return { error: 'NETWORK_ERROR', message: "Could not connect to the product database. Please check your internet connection." };
+  }
+};
+
 // ====================================================================
 // FUNCTION 1: Generate the full, personalized routine
 // ====================================================================
@@ -159,98 +270,6 @@ export const getAiProductRecommendations = async (skinProfile) => {
 
     } catch (error) {
         return [];
-    }
-};
-
-export const analyzeProductByBarcode = async (barcode, skinProfile) => {
-    console.log(`--- AISERVICE: Analyzing barcode: ${barcode} ---`);
-
-    // --- PART 1: Barcode -> Ingredient List (from OpenFoodFacts) ---
-    let ingredients;
-    let productName;
-    try {
-        console.log("   - Fetching product data from OpenFoodFacts...");
-        const productResponse = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}?fields=product_name,ingredients_text_en`);
-        const productData = await productResponse.json();
-
-        // Check if the product was found and has ingredients
-        if (productData.status === 0 || !productData.product?.ingredients_text_en) {
-            console.error("OpenFoodFacts Error: Product not found or has no ingredient list.");
-            return { error: "Product not found in our database or it lacks an ingredient list. Try scanning another product." };
-        }
-
-        ingredients = productData.product.ingredients_text_en;
-        productName = productData.product.product_name || "Unknown Product";
-        console.log(`   - Found Product: ${productName}`);
-
-    } catch (error) {
-        console.error("Error fetching data from OpenFoodFacts:", error);
-        return { error: "Could not connect to the product database. Please check your internet connection." };
-    }
-
-    // --- PART 2: Ingredient List -> AI Analysis (from Gemini) ---
-    try {
-        console.log("   - Sending ingredients to Gemini for analysis...");
-        if (!GEMINI_API_KEY) {
-            throw new Error("Gemini API key is not configured.");
-        }
-        
-        const prompt = `
-            You are a skincare ingredient analysis expert for an app called SkinSync AI.
-            A user with this skin profile is asking about a product: ${JSON.stringify(skinProfile)}.
-            The product is called "${productName}".
-            The ingredients are: "${ingredients}".
-
-            Your task is to:
-            1.  Analyze this ingredient list based on the user's specific skin profile.
-            2.  Provide a simple, one-word verdict from these three options ONLY: "Good Match", "Use with Caution", or "Not Recommended".
-            3.  Provide a simple, one-sentence analysis explaining your verdict.
-            4.  Identify and list up to 3 "Notable Ingredients" (either good or bad) and explain in one simple sentence why each is notable for this specific user.
-
-            Format your response as a valid JSON object ONLY, with this structure:
-            {
-                "productName": "${productName}",
-                "verdict": "Good Match",
-                "analysis": "This product appears to be a good fit for your skin goals.",
-                "notableIngredients": [
-                    {"name": "Niacinamide", "reason": "Excellent for controlling oil and minimizing pores."},
-                    {"name": "Fragrance", "reason": "Can be a potential irritant for your sensitive skin."}
-                ]
-            }
-        `;
-        
-        const requestBody = {
-            "contents": [{ "parts": [{ "text": prompt }] }],
-            "generationConfig": { "responseMimeType": "application/json" }
-        };
-
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.json();
-            console.error("Gemini API Error:", errorBody);
-            throw new Error("The AI analysis service is currently unavailable.");
-        }
-
-        const result = await response.json();
-
-        if (!result.candidates || !result.candidates[0]?.content?.parts[0]?.text) {
-            console.error("Invalid response structure from Gemini.");
-            throw new Error("The AI returned an unexpected response format.");
-        }
-
-        const rawJsonString = result.candidates[0].content.parts[0].text;
-        console.log("   - AI Analysis Received.");
-        return JSON.parse(rawJsonString);
-
-    } catch (error) {
-        console.error("Error in AI analysis service:", error);
-        // We pass the error message to the UI to display it
-        return { error: error.message || "An unexpected error occurred during AI analysis." };
     }
 };
 

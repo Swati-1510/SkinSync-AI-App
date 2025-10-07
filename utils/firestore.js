@@ -1,5 +1,13 @@
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+
+// --- ADD THIS TEMPORARY FIX ---
+// This is the simplest way to ensure all functions are correctly seen in this file's scope.
+const _query = query;
+const _collection = collection;
+const _where = where;
+const _orderBy = orderBy;
+// --- END OF TEMPORARY FIX ---
 console.log("--- Is the 'db' object from Firebase Config valid? ---", db ? "Yes" : "No, it is undefined!");
 
 // Function to get the starting date for the Weekly/Monthly view filter
@@ -79,9 +87,9 @@ export const saveJournalEntry = async (userId, content) => {
 export const getJournalEntriesFromDB = async (userId) => {
     if (!userId) return [];
     try {
-        const q = query(
-            collection(db, "journalEntries"),
-            where("userId", "==", userId)
+        const q = _query(
+            _collection(db, "journalEntries"),
+            _where("userId", "==", userId)
             // orderBy("date", "desc") // We'll keep this disabled for now to avoid index errors
         );
         const querySnapshot = await getDocs(q);
@@ -108,10 +116,10 @@ export const fetchLifestyleData = async (userId, period) => {
         const startDateStr = getStartDate(period);
         
         // --- Query Firestore for ALL daily logs for this user ---
-        const q = query(
-            collection(db, "dailyLogs"),
-            where("userId", "==", userId),
-            orderBy("date", "asc") // Order Ascending so charts draw correctly from oldest to newest
+        const q = _query(
+            _collection(db, "dailyLogs"),
+            _where("userId", "==", userId),
+            _orderBy("date", "asc") // Order Ascending so charts draw correctly from oldest to newest
         );
         const querySnapshot = await getDocs(q);
 

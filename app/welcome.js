@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 import GoogleIcon from '../assets/icons/Google.svg';
+import AppLogoo from '../assets/icons/AppLogoo.svg';
 
 // This is required for the login pop-up to close correctly after completion.
 import { useAuth } from '../context/authContext';
@@ -33,6 +34,11 @@ export default function StartPage() {
           <Text style={{fontSize: hp(2)}} className="font-playfair-display-regular text-muted-khaki mt-2">
             Your Personal AI Skincare Coach
           </Text>
+        </View>
+
+        {/* Logo */}
+        <View className="items-center" style={{ marginVertical: -hp(18) }}>
+          <AppLogoo width={wp(60)} height={hp(23)} />
         </View>
         
         {/* Buttons Section */}

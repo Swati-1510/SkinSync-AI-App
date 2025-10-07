@@ -12,6 +12,15 @@ import LineChartCard from '../../components/LineChartCard';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadPhoto } from '../../utils/storageService'; 
 
+// --- TEMPORARY FIX for Metro bundler bug ---
+const _query = query;
+const _collection = collection;
+const _where = where;
+const _orderBy = orderBy;
+
+
+// --- END OF TEMPORARY FIX ---
+
 
 // --- The Main Component ---
 const ProgressPage = () => {
@@ -30,10 +39,10 @@ const ProgressPage = () => {
     const fetchPhotoEntries = async () => {
     if (!user?.uid) return;
     try {
-        const q = query(
-            collection(db, "progressPhotos"),
-            where("userId", "==", user.uid),
-            orderBy("createdAt", "desc") // Sort by the creation time
+        const q = _query(
+            _collection(db, "progressPhotos"),
+            _where("userId", "==", user.uid),
+            _orderBy("createdAt", "desc") // Sort by the creation time
         );
         const querySnapshot = await getDocs(q);
 

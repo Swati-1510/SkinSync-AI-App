@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/authContext';
 import { getAiProductRecommendations, searchProductsAI } from '../../utils/aiService';
 import useDebounce from '../../utils/useDebounce';
+import ProductPlaceholder from '../../assets/images/Product Placeholder.png';
 
 
 // --- Static Data for UI Building ---
@@ -23,16 +24,18 @@ const concerns = [
 
 // Function to render a single product card
 const renderProductCard = ({ item }) => (
-    <View key={item.name} style={{ width: wp(60), marginRight: 16 }}>
+    <View key={item.name} style={{ width: wp(70), marginRight: 16 }}>
         <TouchableOpacity
             onPress={() => console.log("Tapped on:", item.name)}
         >
             <Card style={{ padding: 0 }}>
                 {/* Image Placeholder */}
                 <View
-                    style={{ height: hp(15), borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                    style={{ height: hp(12), borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
                     className="bg-white justify-center items-center"
-                />
+                >
+                    <Image source={ProductPlaceholder} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                </View>
 
 
                 {/* Card Content Container: Fixed height is key */}
@@ -60,10 +63,10 @@ const renderProductCard = ({ item }) => (
                         {/* Personalized Tag */}
                         <View
                             style={{ backgroundColor: '#D0F0C0', alignSelf: 'flex-start' }}
-                            className="rounded-full py-1 px-3 flex-row items-left"
+                            className="rounded-full py-1 px-3 flex-row items-center"
                         >
                             <Text className="text-green-800 font-bold text-sm mr-1">✅</Text>
-                            <Text className="text-dark-olive-green font-nunito-sans-bold" style={{ fontSize: hp(1.3) }}>
+                            <Text className="text-dark-olive-green font-nunito-sans-bold flex-shrink" style={{ fontSize: hp(1.3) }}>
                                 {item.tag.replace('✅', '').trim()}
                             </Text>
                         </View>
@@ -135,17 +138,20 @@ const Explore = () => {
         }
     }, [debouncedSearchTerm]); // Only trigger when the debounced value changes
 
-    const filteredProducts = products.filter(product => {
-        if (!activeFilter) {
-            return true; // If no filter is active, show all products
+    const handleConcernPress = (concernName) => {
+        if (concernName === activeFilter) {
+            // If the same pill is tapped again, clear the filter and show initial products
+            setActiveFilter(null);
+            setProducts(initialProducts);
+        } else {
+            // If a new pill is tapped, set it as active and search
+            setActiveFilter(concernName);
+            handleSearch(concernName);
         }
-        // If a product's tag is not available, it will not be included in the filtered results.
-        if (!product.tag) {
-            return false;
-        }
-        // Core Filtering Logic
-        return product.tag.toLowerCase().includes(activeFilter.toLowerCase());
-    });
+    };
+
+    const filteredProducts = products; // We are no longer filtering client-side
+
 
     return (
         <View className="flex-1 bg-app-bg">
@@ -192,7 +198,7 @@ const Explore = () => {
                             {concerns.map((item, index) => (
                                 <TouchableOpacity
                                     key={index}
-                                    onPress={() => setActiveFilter(item.name === activeFilter ? null : item.name)}
+                                    onPress={() => handleConcernPress(item.name)}
                                     className="rounded-full py-2 px-4 flex-row items-center"
                                     style={{
                                         marginRight: 12,
@@ -232,7 +238,7 @@ const Explore = () => {
                             contentContainerStyle={{ paddingRight: wp(5) }}
                         >
                             <View className="flex-row" style={{ gap: 16 }}>
-                                {filteredProducts.map((product, index) => (
+                                {products.map((product, index) => (
                                     <View key={`${product.name}-${index}`}>
                                         {renderProductCard({ item: product })}
                                     </View>

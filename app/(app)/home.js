@@ -143,13 +143,15 @@ export default function Home() {
       {/* --- 1. The Greeting --- */}
       <View className="mb-8 flex-row">
         <Text
-          style={{ fontSize: hp(3) }}
+          style={{ fontSize: hp(3.5) }}
           className="font-nunito-sans-bold text-dark-olive-green flex-1"
           numberOfLines={2}>
           {timeOfDay.greeting}, {user?.username || 'Guest'}
 
         </Text>
-        <Text style={{ fontSize: hp(3) }}>😊</Text>
+        <Text style={{ fontSize: hp(3.5
+          
+        ) }}>😊</Text>
       </View>
 
       <View className="w-full flex-row justify-end mb-4">
