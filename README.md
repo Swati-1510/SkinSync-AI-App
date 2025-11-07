@@ -1,50 +1,92 @@
-# Welcome to your Expo app 👋
+Welcome to SkinSync AI 🤖✨
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is a complete, all-in-one skincare coach built with React Native for a final-year BSc Computer Science project. It's not just a basic app; it's a full-stack solution that uses Google's Gemini AI and Firebase to provide a truly personalized user experience.
 
-## Get started
+Key Features
 
-1. Install dependencies
+🧠 Personalized Onboarding: A comprehensive, multi-step quiz to capture a user's unique skin type, concerns, and goals.
 
-   ```bash
-   npm install
-   ```
+🗓️ AI-Powered Routines: Connects to the Google Gemini AI API to generate fully personalized AM/PM routines with real product recommendations based on the user's profile.
 
-2. Start the app
+🏠 Home Hub: A dynamic dashboard featuring a daily AI Coach Tip (also from Gemini) and a Daily Log to track water intake and sleep, which is saved to Firestore.
 
-   ```bash
-   npx expo start
-   ```
+🔍 Smart Explore Page: An AI-powered search where users can find product recommendations by name, brand, or even a skin concern like "acne."
 
-In the output, you'll find options to open the app in a
+📱 Hybrid Barcode Scanner: Scans a product and checks two public databases (Open Beauty Facts & Open Food Facts).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+If found, it sends the ingredients to the Gemini AI for a personalized analysis ("Good Match," "Use with Caution," etc.).
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+If not found, it activates the fallback...
 
-## Get a fresh project
+📸 OCR "Scan from Photo" Feature:
 
-When you're ready, run:
+Solves the "Product Not Found" dead end.
 
-```bash
-npm run reset-project
-```
+Uses expo-image-picker to let the user take a photo of the ingredient list.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Sends the photo to Google Cloud Vision API (OCR) to read the text.
 
-## Learn more
+Sends the extracted text to the Gemini AI for a final analysis.
 
-To learn more about developing your project with Expo, look at the following resources:
+📊 Progress & Journal: A dedicated module to log daily check-ins and write journal notes to track skin progress over time.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+👤 Full Backend Support: Secure user authentication (Email/Password & Google) and all data persistence handled by Firebase (Auth & Firestore).
 
-## Join the community
+Tech Stack
 
-Join our community of developers creating universal apps.
+Frontend: React Native (with Expo)
+
+Navigation: Expo Router
+
+Styling: Tailwind CSS (NativeWind)
+
+Backend & Database: Firebase (Auth, Firestore)
+
+AI: Google Gemini AI (for analysis & recommendations)
+
+OCR: Google Cloud Vision API
+
+Data: Open Beauty Facts API, Open Food Facts API
+
+Builds: EAS (Expo Application Services)
+
+Get started
+
+1. Clone the Repository
+
+git clone [https://github.com/YourUsername/SkinSync-AI-App.git](https://github.com/YourUsername/SkinSync-AI-App.git)
+cd SkinSync-AI-App
+
+
+2. Install Dependencies
+
+npm install
+
+
+3. Set Up Environment Variables
+
+This project requires API keys for Firebase and Google Cloud.
+
+Create a file named .env in the root of the project.
+
+Add your keys in the following format:
+
+# Your Firebase project's web app config object (as a JSON string)
+EXPO_PUBLIC_FIREBASE_CONFIG='{"apiKey": "...", "authDomain": "...", ...}'
+
+# Your Google Cloud API Key (for both Gemini and Cloud Vision)
+EXPO_PUBLIC_GEMINI_API_KEY="AIza..."
+
+
+Important: In your Google Cloud Project, you must enable the following APIs:
+
+Generative Language API (for Gemini)
+
+Cloud Vision API (for OCR)
+
+4. Start the App
+
+npx expo start
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
