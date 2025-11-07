@@ -54,7 +54,7 @@ Get started
 
 1. Clone the Repository
 
-git clone [https://github.com/YourUsername/SkinSync-AI-App.git](https://github.com/YourUsername/SkinSync-AI-App.git)
+git clone [https://github.com/Swati-1510/SkinSync-AI-App.git](https://github.com/Swati-1510/SkinSync-AI-App.git)
 cd SkinSync-AI-App
 
 
@@ -68,14 +68,6 @@ npm install
 This project requires API keys for Firebase and Google Cloud.
 
 Create a file named .env in the root of the project.
-
-Add your keys in the following format:
-
-# Your Firebase project's web app config object (as a JSON string)
-EXPO_PUBLIC_FIREBASE_CONFIG='{"apiKey": "...", "authDomain": "...", ...}'
-
-# Your Google Cloud API Key (for both Gemini and Cloud Vision)
-EXPO_PUBLIC_GEMINI_API_KEY="AIza..."
 
 
 Important: In your Google Cloud Project, you must enable the following APIs:
