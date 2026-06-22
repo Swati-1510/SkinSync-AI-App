@@ -50,8 +50,7 @@ Data: Open Beauty Facts API, Open Food Facts API
 
 Builds: EAS (Expo Application Services)
 
-<img width="540" height="1170" alt="a30b3c89-ef74-47b2-856b-4a1eb4f9df2c" src="https://github.com/user-attachments/assets/2e709502-bc92-479e-865c-1a77b0e837b2" />
-<img width="738" height="1600" alt="03fbe091-8020-4d35-869b-e17b4e94f888" src="https://github.com/user-attachments/assets/9afebcb6-f4d2-49be-9c26-5a2636d232c2" />
+<img width="540" height="1170" alt="a30b3c89-ef74-47b2-856b-4a1eb4f9df2c" src="https://github.com/user-attachments/assets/2e709502-bc92-479e-865c-1a77b0e837b2" /> <img width="738" height="1600" alt="03fbe091-8020-4d35-869b-e17b4e94f888" src="https://github.com/user-attachments/assets/9afebcb6-f4d2-49be-9c26-5a2636d232c2" />
 <img width="738" height="1600" alt="b4ef53a3-8ffc-4c2a-b6c3-7b0693f9eb1d" src="https://github.com/user-attachments/assets/52118235-2022-456c-86cb-05a1483c67f3" />
 <img width="738" height="1600" alt="37fb3593-b6b8-4397-bd6a-5e8fdd86d502" src="https://github.com/user-attachments/assets/aaac5cc3-bd02-4963-ab97-caa52bddb8e8" />
 <img width="738" height="1600" alt="dda3c338-4048-4cc4-9dfc-1c4d7ea04c80" src="https://github.com/user-attachments/assets/7db2e447-17a7-4fb1-9bb5-935cef894148" />
