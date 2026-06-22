@@ -50,9 +50,6 @@ Data: Open Beauty Facts API, Open Food Facts API
 
 Builds: EAS (Expo Application Services)
 
-<img width="738" height="1600" alt="image" src="https://github.com/user-attachments/assets/d6edcd8d-d9a5-4430-8342-43697500a45c" />
-
-
 Get started
 
 1. Clone the Repository
